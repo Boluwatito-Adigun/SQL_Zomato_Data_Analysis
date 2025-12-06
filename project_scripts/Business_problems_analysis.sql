@@ -48,3 +48,75 @@ ORDER BY total_orders DESC
 Question:
 Find the average order value (AOV) per customer who has placed more than 750 orders.
 Return: customer_name, aov (average order value).*/
+
+
+SELECT
+    customer_name,
+    count(order_id) AS total_orders,
+    ROUND(AVG(total_amount)::NUMERIC, 2) AS AOV
+FROM customers c
+JOIN orders o
+    ON c.customer_id = o.customer_id
+GROUP BY    
+    customer_name
+HAVING count(order_id) > 750
+ORDER BY
+    total_orders DESC
+
+/* Q4. High-Value Customers
+Question:
+List the customers who have spent more than 100K in total on food orders.
+Return: customer_name, customer_id. */
+
+SELECT
+    customer_name,
+    sum(total_amount) AS amount_spent
+FROM customers c
+JOIN orders o
+    ON c.customer_id = o.customer_id
+GROUP BY    
+    customer_name
+HAVING sum(total_amount) > 100000
+ORDER BY
+    amount_spent DESC
+
+
+/*Q5. Orders Without Delivery
+Question:
+Write a query to find orders that were placed but not delivered.
+Return: restaurant_name, city, and the number of not delivered orders. */
+
+SELECT
+    r.restaurant_name,
+    r.city,
+    count(o.order_status) AS total_non_delivery
+FROM orders o
+LEFT JOIN deliveries d 
+    ON d.order_id = o.order_id
+LEFT JOIN restaurants r 
+    ON o.restaurant_id = r.restaurant_id
+WHERE   
+    order_status = 'Not Fulfilled'
+GROUP BY 
+    r.restaurant_name,
+    r.city
+ORDER BY 
+    total_non_delivery DESC; 
+
+/*Q6. Restaurant Revenue Ranking
+Question:
+Rank restaurants by their total revenue from the last year.
+Return: restaurant_name, total_revenue, and their rank within their city.*/
+
+SELECT
+    r.restaurant_name,
+    r.city,
+    sum(o.order_amount) AS total_revenue
+FROM orders o 
+JOIN restaurants r 
+    ON o.restaurant_id = r.restaurant_id
+GROUP BY
+    r.restaurant_name,
+    r.city
+ORDER BY 
+    total_revenue
