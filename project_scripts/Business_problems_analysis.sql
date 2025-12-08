@@ -109,14 +109,30 @@ Rank restaurants by their total revenue from the last year.
 Return: restaurant_name, total_revenue, and their rank within their city.*/
 
 SELECT
-    r.restaurant_name,
     r.city,
-    sum(o.order_amount) AS total_revenue
+    r.restaurant_name,
+    sum(o.total_amount) AS total_revenue,
+    DENSE_RANK () OVER(PARTITION BY r.city ORDER BY sum(o.total_amount) DESC )AS rank
 FROM orders o 
 JOIN restaurants r 
     ON o.restaurant_id = r.restaurant_id
+WHERE EXTRACT (YEAR FROM o.order_date) = 2024
 GROUP BY
     r.restaurant_name,
     r.city
 ORDER BY 
-    total_revenue
+    r.city,
+    total_revenue DESC
+
+/*Q7. Most Popular Dish by City
+Question:
+Identify the most popular dish in each city based on the number of orders.*/
+
+/*Q8. Customer Churn
+Question:
+Find customers who haven’t placed an order in 2024 but did in 2023*/
+
+/*Q9. Cancellation Rate Comparison
+Question:
+Calculate and compare the order cancellation rate for each restaurant between the current year
+and the previous year.*/
