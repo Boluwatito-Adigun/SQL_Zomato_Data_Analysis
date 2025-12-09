@@ -128,6 +128,29 @@ ORDER BY
 Question:
 Identify the most popular dish in each city based on the number of orders.*/
 
+SELECT
+    city,
+    order_item,
+    total_orders
+FROM
+ (   SELECT
+        r.city AS city,
+        o.order_item AS order_item,
+        count(o.order_item) AS total_orders,
+        DENSE_RANK() OVER(PARTITION BY r.city ORDER BY count(o.order_item) DESC )AS rank
+    FROM orders o 
+    JOIN restaurants r 
+        ON o.restaurant_id = r.restaurant_id
+    GROUP BY
+        o.order_item,
+        r.city
+    ORDER BY 
+        r.city,
+        total_orders DESC
+ ) AS sb_1
+ WHERE rank = 1
+    
+
 /*Q8. Customer Churn
 Question:
 Find customers who haven’t placed an order in 2024 but did in 2023*/
