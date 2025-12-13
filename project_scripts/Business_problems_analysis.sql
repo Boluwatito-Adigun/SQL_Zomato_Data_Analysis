@@ -260,8 +260,10 @@ GROUP BY
 ORDER BY 
     avg_delivery_time
 
-
 /*Q11. Monthly Restaurant Growth Ratio
 Question:
 Calculate each restaurant's growth ratio based on the total number of delivered orders since its
 joining.*/
+
+HJFGKYFKTUGYH
+
