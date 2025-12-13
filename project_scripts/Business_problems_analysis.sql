@@ -265,5 +265,81 @@ Question:
 Calculate each restaurant's growth ratio based on the total number of delivered orders since its
 joining.*/
 
-HJFGKYFKTUGYH
+WITH growth_ratio AS
+(
+    SELECT 
+        r.restaurant_name,
+        r.restaurant_id,
+        TO_CHAR (o.order_date, 'mm-yy') AS months,
+        COUNT(o.order_id) AS cr_month_orders,
+        LAG(COUNT(o.order_id), 1) OVER(PARTITION BY r.restaurant_id ORDER BY TO_CHAR (o.order_date, 'mm-yy')) AS prev_month_orders
+    FROM orders o 
+    JOIN deliveries d 
+        ON d.order_id = o.order_id
+    RIGHT JOIN restaurants r 
+        ON r.restaurant_id = o.restaurant_id
+    WHERE d.delivery_status = 'Delivered'
+    GROUP BY
+        r.restaurant_name,
+        r.restaurant_id,
+        months
+    ORDER BY
+        r.restaurant_id,
+        months
+    )
+SELECT 
+    restaurant_id,
+    restaurant_name,
+    months,
+    prev_month_orders,
+    cr_month_orders,
+    ROUND((cr_month_orders::numeric - prev_month_orders::numeric)/prev_month_orders::numeric * 100, 2) AS growth_ratio
+FROM growth_ratio
+WHERE growth_ratio IS NOT NULL
+
+/*Q12. Customer Segmentation
+Question:
+Segment customers into 'Gold' or 'Silver' groups based on their total spending compared to the
+average order value (AOV). If a customer's total spending exceeds the AOV, label them as
+'Gold'; otherwise, label them as 'Silver'.
+Return: The total number of orders and total revenue for each segment. */
+
+
+
+/*Q13. Rider Monthly Earnings
+Question:
+Calculate each rider's total monthly earnings, assuming they earn 8% of the order amount.*/
+
+WITH riders_monthly_earnings AS
+(
+    SELECT
+        r.rider_id,
+        r.rider_name, 
+        EXTRACT (MONTH FROM o.order_date) AS months,
+        EXTRACT (YEAR FROM o.order_date) AS years,
+        SUM(o.total_amount) AS total_monthly_orders,
+        RANK() OVER(PARTITION BY r.rider_id ORDER BY r.rider_id, r.rider_name)
+    FROM orders o 
+    JOIN deliveries d   
+        ON o.order_id = d.order_id
+    JOIN riders r 
+        ON r.rider_id = d.rider_id
+    WHERE o.order_status = 'Completed'
+    GROUP BY
+        r.rider_id,
+        r.rider_name,
+        months,
+        years
+    ORDER BY
+        r.rider_id,
+        years,
+        months
+)
+SELECT
+    rider_id,
+    rider_name,
+    months,
+    years,
+    ROUND(8/100::numeric * total_monthly_orders::numeric,2) AS monthly_earnings
+FROM riders_monthly_earnings
 
