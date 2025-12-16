@@ -331,8 +331,38 @@ average order value (AOV). If a customer's total spending exceeds the AOV, label
 'Gold'; otherwise, label them as 'Silver'.
 Return: The total number of orders and total revenue for each segment. */
 
+WITH segment AS
 
+(
+    SELECT
+        c.customer_id,
+        c.customer_name,
+        SUM(o.total_amount) AS total_revenue,
+        COUNT(o.order_id) AS total_orders,
+        CASE 
+            WHEN SUM(o.total_amount) > (SELECT AVG(total_amount)FROM orders) THEN 'Gold' ELSE 'Silver' 
+        END AS groupings
+    FROM orders o 
+    RIGHT JOIN customers c 
+        ON c.customer_id = o.customer_id
+    WHERE o.order_status = 'Completed'
+    GROUP BY
+        c.customer_id,
+        c.customer_name
+    ORDER BY
+        total_revenue DESC
+)
 
+SELECT
+    groupings,
+    SUM(total_revenue) AS revenue,
+    SUM(total_orders)  AS orders
+FROM    
+    segment
+GROUP BY
+    groupings
+
+    
 /*Q13. Rider Monthly Earnings
 Question:
 Calculate each rider's total monthly earnings, assuming they earn 8% of the order amount.*/
@@ -453,3 +483,7 @@ GROUP BY
     c.customer_name
 ORDER BY 
    total_revenue DESC
+
+
+
+SELECT * FROM customers
