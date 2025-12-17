@@ -463,7 +463,30 @@ ORDER BY
 Question:
 Analyze order frequency per day of the week and identify the peak day for each restaurant.*/
 
+SELECT 
+    restaurant_name,
+    day,
+    total_orders
+FROM 
+(
 
+    SELECT
+        r.restaurant_name,
+        TO_CHAR(o.order_date, 'Day') AS day,
+        COUNT(order_id) AS total_orders,
+        RANK() OVER(PARTITION BY r.restaurant_name ORDER BY  COUNT(order_id) DESC) AS rank
+    FROM
+        orders o 
+    JOIN restaurants r 
+        ON r.restaurant_id = o.restaurant_id
+    GROUP BY 
+        r.restaurant_name,
+        day
+    ORDER BY
+        r.restaurant_name,
+        total_orders DESC
+) AS t1
+WHERE rank = 1
 
 
 /*Q16. Customer Lifetime Value (CLV)
@@ -484,6 +507,73 @@ GROUP BY
 ORDER BY 
    total_revenue DESC
 
+/*Q17. Monthly Sales Trends
+Question:
+Identify sales trends by comparing each month's total sales to the previous month.*/
 
+ SELECT 
+        EXTRACT (MONTH FROM order_date) AS months,
+        EXTRACT (YEAR FROM order_date) AS years,
+        SUM(total_amount) AS cr_month_sales,
+        LAG(SUM(total_amount), 1) OVER(PARTITION BY EXTRACT (YEAR FROM order_date), EXTRACT(MONTH FROM order_date)  ORDER BY EXTRACT (MONTH FROM order_date)) AS prev_month_sales
+    FROM orders 
+    GROUP BY
+        years,
+        months  
+    ORDER BY
+        years,
+        months
 
-SELECT * FROM customers
+/*Q18. Rider Efficiency
+Question:
+Evaluate rider efficiency by determining average delivery times and identifying those with the
+lowest and highest averages.*/
+
+WITH rider_efficiency
+AS
+(
+    SELECT
+            r.rider_id,
+            r.rider_name,
+            o.order_id,
+            o.order_time,
+            d.delivery_time,
+            EXTRACT(EPOCH FROM (d.delivery_time - o.order_time + 
+            CASE WHEN d.delivery_time < o.order_time THEN INTERVAL '1 day'
+            ELSE INTERVAL '0 day' END))/60 AS time_taken
+        FROM riders r
+        JOIN deliveries d
+            ON r.rider_id = d.rider_id
+        JOIN orders o 
+            ON o.order_id = d.order_id
+        ORDER BY
+            o.order_id
+),
+
+unit_delivery_time
+AS
+(
+    SELECT 
+        rider_id,
+        rider_name,
+        ROUND(AVG(time_taken),2) AS average_delivery_time
+    FROM 
+        rider_efficiency
+    GROUP BY 
+        rider_id,
+        rider_name
+    ORDER BY 
+        rider_id
+)
+
+SELECT
+    rider_id,
+    rider_name,
+    average_delivery_time,
+    CASE
+    WHEN average_delivery_time > (SELECT ROUND(AVG(time_taken),2) FROM rider_efficiency) THEN 'High'
+    WHEN average_delivery_time = (SELECT ROUND(AVG(time_taken),2) FROM rider_efficiency) THEN 'Standard'
+    ELSE 'Low'
+    END groupings
+FROM
+    unit_delivery_time
