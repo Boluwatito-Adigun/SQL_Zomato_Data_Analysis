@@ -500,7 +500,6 @@ SELECT
 FROM orders o
 JOIN customers c 
     ON o.customer_id = c.customer_id
-WHERE o.order_status = 'Completed'
 GROUP BY
     c.customer_id,
     c.customer_name
@@ -515,7 +514,7 @@ Identify sales trends by comparing each month's total sales to the previous mont
         EXTRACT (MONTH FROM order_date) AS months,
         EXTRACT (YEAR FROM order_date) AS years,
         SUM(total_amount) AS cr_month_sales,
-        LAG(SUM(total_amount), 1) OVER(PARTITION BY EXTRACT (YEAR FROM order_date), EXTRACT(MONTH FROM order_date)  ORDER BY EXTRACT (MONTH FROM order_date)) AS prev_month_sales
+        LAG(SUM(total_amount), 1) OVER(ORDER BY EXTRACT (YEAR FROM order_date), EXTRACT (MONTH FROM order_date)) AS prev_month_sales
     FROM orders 
     GROUP BY
         years,
