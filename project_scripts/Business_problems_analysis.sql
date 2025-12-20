@@ -576,3 +576,59 @@ SELECT
     END groupings
 FROM
     unit_delivery_time
+
+
+/*Q19. Order Item Popularity
+Question:
+Track the popularity of specific order items over time and identify seasonal demand spikes.*/
+
+SELECT 
+    order_item,
+    season,
+    Count(order_id) AS total_orders
+FROM
+
+(
+SELECT
+    *,
+    EXTRACT(MONTH FROM order_date) AS month,
+    CASE
+        WHEN EXTRACT(MONTH FROM order_date) BETWEEN 4 AND 6 THEN 'Spring'
+        WHEN EXTRACT(MONTH FROM order_date) > 6 AND EXTRACT(MONTH FROM order_date) < 9 THEN 'Summer'
+        ELSE 'Winter'
+    END AS season
+FROM orders
+) AS t1 
+
+GROUP BY
+    order_item,
+    season
+ORDER BY 
+    order_item,
+    total_orders DESC
+
+
+/*Q20. City Revenue Ranking
+Question:
+Rank each city based on the total revenue for the last year (2023).*/
+
+SELECT
+    r.city,
+    SUM(o.total_amount) AS total_revenue,
+    EXTRACT (YEAR FROM o.order_date) AS year,
+    RANK() OVER(ORDER BY SUM(o.total_amount)DESC)
+FROM orders o
+RIGHT JOIN restaurants r 
+    ON o.restaurant_id = r.restaurant_id
+WHERE 
+    EXTRACT (YEAR FROM o.order_date) = '2023'
+GROUP BY 
+    r.city,
+    year
+ORDER BY 
+    total_revenue DESC
+
+
+
+
+
